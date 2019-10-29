@@ -1,0 +1,23 @@
+﻿--
+--1 = 主檔,SAL,EMP
+--2 = 交易檔,日計檔,DAT,
+--3 = 統計檔,月結檔(不會清掉),MON,YER
+--4 = 暫時檔(會清除掉),TMP
+--5 = 歷史檔,HIS
+--9 = 代碼檔,COD
+--AA = 系統檔,AA1SYS10,AA1USR10,AA1PGM10,AA2LOG10,AA2LOG20
+--
+
+https://dotblogs.com.tw/wasichris/2015/03/11/150705
+
+
+
+
+
+
+
+
+
+
+
+
