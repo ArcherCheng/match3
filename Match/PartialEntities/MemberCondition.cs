@@ -7,11 +7,14 @@ using System.Threading.Tasks;
 
 namespace Match.Entities
 {
-    public partial class MemberCondition : IEntityBase, IValidatableObject
+    public partial class MemberCondition : EntityBase, IEntityBase, IValidatableObject
     {
         public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
         {
-            throw new NotImplementedException();
+            if(this.Sex == 0)
+            {
+                yield return new ValidationResult("性別不能空白", new string[] { "Sex" });
+            }
         }
     }
 }

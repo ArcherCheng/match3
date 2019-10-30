@@ -5,11 +5,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Match.Entities
 {
-    public partial class MemberDetail : IEntityBase, IValidatableObject
+    public partial class MemberDetail : EntityBase, IEntityBase
     {
-        public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
-        {
-            throw new NotImplementedException();
-        }
     }
 }

@@ -181,13 +181,13 @@ namespace Match.Services
 
         public async Task UploadPhoto(int userId, PhotoCreateDto model)
         {
-            //Microsoft.AspNetCore.Http.IFormFile files = model.File;
-            var file = model.File;
-
+            //var file = model.File;
+            Microsoft.AspNetCore.Http.IFormFile file = model.File;
+            var path = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/assets/images/", userId.ToString(), file.FileName);
+            
             using(var db= base.NewDb())
             {
-
-                using(var stream = System.IO.File.Create(file.FileName))
+                using(var stream = System.IO.File.Create(path))
                 {
                     await file.CopyToAsync(stream);
                 }
@@ -196,18 +196,16 @@ namespace Match.Services
                 if (await HasMainPhoto(userId))
                     isMain = false;
 
-
                 var memberPhoto = new MemberPhoto()
                 {
                     UserId = userId,
                     AddedDate = System.DateTime.Now,
                     Descriptions = model.descriptions?? file.FileName,
                     IsMain = isMain ,
-                    PhotoUrl = file.FileName
+                    PhotoUrl = path
                 };
 
                 db.Add(memberPhoto);
-
                 await db.SaveChangesAsync();
                 return;
             }
@@ -303,7 +301,7 @@ namespace Match.Services
             }
         }
 
-        public async Task<PageList<Member>> GetMylikerLisk(int userId, MemberParameter para)
+        public async Task<PageList<Member>> GetMyLikerLisk(int userId, MemberParameter para)
         {
             using(var db = base.NewDb())
             {
@@ -313,6 +311,185 @@ namespace Match.Services
                     .AsQueryable();
 
                 return await PageList<Member>.CreateAsync(member, para.PageNumber, para.PageSize);
+            }
+        }
+
+        public async Task<PageList<Member>> GetLikeMeLisk(int userId, MemberParameter para)
+        {
+            using (var db = base.NewDb())
+            {
+                var member = db.Liker
+                    .Where(x => x.LikerId == userId && !x.IsDelete && !x.User.IsCloseData)
+                    .Select(x => x.User)
+                    .AsQueryable();
+
+                return await PageList<Member>.CreateAsync(member, para.PageNumber, para.PageSize);
+            }
+        }
+
+        public async Task<bool> DeleteMyLiker(int userId, int likeId)
+        {
+            using(var db = base.NewDb())
+            {
+                var liker = db.Liker
+                    .Where(x => x.UserId == userId && x.LikerId == likeId);
+
+                if (liker == null)
+                    return false;
+
+                db.Remove(liker);
+                await db.SaveChangesAsync();
+                return true;
+            }
+        }
+
+        public async Task<Liker> AddMyLiker(int userId, int likeId)
+        {
+            using (var db = base.NewDb())
+            {
+                var liker = await db.Liker
+                    .FirstOrDefaultAsync(x => x.UserId == userId && x.LikerId == likeId);
+
+                if (liker == null)
+                {
+                    liker = new Liker()
+                    {
+                        UserId = userId,
+                        LikerId = likeId,
+                        AddedDate = System.DateTime.Now
+                    };
+                    db.Add(liker);
+                    await db.SaveChangesAsync();
+                }
+                return liker;
+            }
+        }
+
+        public async Task<Message> GetMessage(int userId, int msgId)
+        {
+            using(var db = NewDb())
+            {
+                var message = await db.Message
+                    .FirstOrDefaultAsync(x => x.SenderId == userId && x.Id == msgId);
+                return message;
+            }
+        }
+
+        public async Task<IEnumerable<Message>> GetAllMessages(int userId, MemberParameter para)
+        {
+            using (var db = NewDb())
+            {
+                var lastDate = System.DateTime.Now.AddMonths(-1);
+                var messages = db.Message
+                    .Include(x => x.Sender)
+                    .Include(x => x.Recipient)
+                    .AsQueryable();
+
+                switch (para.MessageContainer)
+                {
+                    case "Inbox":
+                        messages = messages
+                            .Where(x => x.RecipientId == userId && x.RecipientDeleted == false && x.SendDate > lastDate);
+                        break;
+                    case "Outbox":
+                        messages = messages
+                            .Where(x => x.SenderId == userId && x.SenderDeleted == false && x.SendDate > lastDate);
+                        break;
+                    default:
+                        messages = messages
+                            .Where(x => x.RecipientId == userId && x.RecipientDeleted == false && x.SendDate > lastDate);
+                        break;
+                }
+                messages = messages.OrderByDescending(x => x.SendDate);
+                return messages;
+            }
+        }
+
+        public async Task<IEnumerable<Message>> GetUnreadMessages(int userId, MemberParameter para)
+        {
+            using (var db = NewDb())
+            {
+                var lastDate = System.DateTime.Now.AddMonths(-1);
+                var messages = db.Message
+                    .Include(x => x.Sender)
+                    .Include(x => x.Recipient)
+                    .Where(x => x.RecipientId == userId && x.SendDate > lastDate && x.RecipientDeleted == false && x.IsRead == false)
+                    .AsQueryable();
+
+                messages = messages.OrderByDescending(x => x.SendDate);
+                return messages;
+            }
+        }
+
+        public async Task<IEnumerable<Message>> GetThreadMessages(int userId, int recipientId)
+        {
+            using (var db = NewDb())
+            {
+                var lastDate = System.DateTime.Now.AddMonths(-1);
+                var messages = await db.Message
+                    .Include(x => x.Sender)
+                    .Include(x => x.Recipient)
+                    .Where(p => p.RecipientId == userId 
+                        && p.SenderId == recipientId
+                        && p.RecipientDeleted == false
+                        && p.SendDate > lastDate
+                        || 
+                        p.RecipientId == recipientId 
+                        && p.SenderId == userId 
+                        && p.SenderDeleted == false 
+                        && p.SendDate > lastDate)
+                    .OrderByDescending(x=>x.SendDate)
+                    .ToListAsync();
+
+                return messages;
+            }
+        }
+
+        public async Task CreateMessage(int userId, Message model)
+        {
+            using(var db = NewDb())
+            {
+                model.SenderId = userId;
+                model.SendDate = System.DateTime.Now;
+                db.Add(model);
+                await db.SaveChangesAsync();
+            }
+        }
+
+        public async Task DeleteMessage(int userId, int msgId)
+        {
+            using (var db = NewDb())
+            {
+                var message = await db.Message
+                    .FirstOrDefaultAsync(x => x.Id == msgId && x.SenderId == userId);
+
+                if (message == null)
+                    return;
+
+                if (message.SenderId == userId)
+                    message.SenderDeleted = true;
+
+                if (message.RecipientId == userId)
+                    message.RecipientDeleted = true;
+                
+                db.Entry(message).State= EntityState.Modified;
+                await db.SaveChangesAsync();
+            }
+        }
+
+        public async Task MakrReadMessage(int userId, int msgId)
+        {
+            using (var db = NewDb())
+            {
+                var message = await db.Message
+                    .FirstOrDefaultAsync(x => x.Id == msgId && x.SenderId == userId);
+
+                if (message == null)
+                    return;
+
+                message.IsRead = true;
+                db.Entry(message).State = EntityState.Modified;
+                await db.SaveChangesAsync();
             }
         }
     }

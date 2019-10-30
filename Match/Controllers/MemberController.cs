@@ -47,8 +47,11 @@ namespace Match.Controllers
         }
 
         [HttpGet("getPhoto/{photoId}")]
-        public async Task<IActionResult> GetPhoto(int photoId)
+        public async Task<IActionResult> GetPhoto(int userId, int photoId)
         {
+            if (userId != int.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier).Value))
+                return Unauthorized();
+
             var photo = await _service.GetPhoto(photoId);
             return Ok(photo);
         }
@@ -57,10 +60,6 @@ namespace Match.Controllers
         public async Task<IActionResult> UploadPhotos(int userId, [FromForm]PhotoCreateDto model)
         {
             if (userId != int.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier).Value))
-                return Unauthorized();
-
-            var member = await _service.GetByIdAsync(userId);
-            if (member == null)
                 return Unauthorized();
 
             var file = model.File;
@@ -77,7 +76,6 @@ namespace Match.Controllers
             if (userId != int.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier).Value))
                 return Unauthorized();
 
-
             var photo = await _service.SetMainPhoto(userId, id);
             if (photo == null)
                 return BadRequest("設定相片封面失敗");
@@ -92,7 +90,6 @@ namespace Match.Controllers
                 return Unauthorized();
 
             await _service.DeletePhoto(userId, id);
- 
             return Ok("刪除相片成功");
         }
 
@@ -106,21 +103,119 @@ namespace Match.Controllers
             return Ok();
         }
 
-        [HttpPost("myLikerList")]
+        [HttpGet("myLikerList")]
         public async Task<IActionResult> GetMylikerLisk(int userId, [FromQuery]MemberParameter para)
         {
             if (userId != int.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier).Value))
                 return Unauthorized();
 
-            PageList<Member> members = await _service.GetMylikerLisk(userId, para);
+            PageList<Member> members = await _service.GetMyLikerLisk(userId, para);
             base.AddPaginationHeader(members);
+
             var memberListDto = _mapper.Map<IEnumerable<MemberListDto>>(members);
             return Ok(memberListDto);
         }
 
+        [HttpDelete("deleteMyLiker/{likeId}")]
+        public async Task<IActionResult> DeleteMyliker(int userId, int likeId)
+        {
+            if (userId != int.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier).Value))
+                return Unauthorized();
 
+            bool success = await _service.DeleteMyLiker(userId, likeId);
+            if (!success)
+                return BadRequest("取消好友失敗");
 
+            // return NoContent();
+            // return Ok( "成功加入我的最愛" );
+            return Ok();
+        }
 
+        [HttpPost("addMyLiker/{likeId}")]
+        public async Task<IActionResult> AddMyliker(int userId, int likeId)
+        {
+            if (userId != int.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier).Value))
+                return Unauthorized();
+
+            var liker = await _service.AddMyLiker(userId, likeId);
+            if (liker == null)
+                return BadRequest("加入好友失敗");
+
+            return Ok(liker);
+        }
+
+        [HttpPost("getMessage/{msgId}")]
+        public async Task<IActionResult> GetMessage(int userId, int msgId)
+        {
+            if (userId != int.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier).Value))
+                return Unauthorized();
+
+            var message = await _service.GetMessage(userId, msgId);
+            return Ok(message);
+        }
+
+        [HttpGet("getAllMessages")]
+        public async Task<IActionResult> GetAllMessages(int userId,[FromQuery]MemberParameter para)
+        {
+            if (userId != int.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier).Value))
+                return Unauthorized();
+
+            var messages = await _service.GetAllMessages(userId, para);
+            return Ok(messages);
+        }
+
+        [HttpGet("getUnreadMessages")]
+        public async Task<IActionResult> GetUnreadMessages(int userId, [FromQuery]MemberParameter para)
+        {
+            if (userId != int.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier).Value))
+                return Unauthorized();
+
+            var messages = await _service.GetUnreadMessages(userId, para);
+            return Ok(messages);
+        }
+
+        [HttpGet("threadMessage/{recipientId}")]
+        public async Task<IActionResult> GetThreadMessage(int userId, int recipientId)
+        {
+            if (userId != int.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier).Value))
+                return Unauthorized();
+
+            var messages = await _service.GetThreadMessages(userId, recipientId);
+            return Ok(messages);
+        }
+
+        [HttpPost("createMessage")]
+        public async Task<IActionResult> CreateMessage(int userId, [FromBody]Message model)
+        {
+            if (userId != int.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier).Value))
+                return Unauthorized();
+
+            await _service.CreateMessage(userId, model);
+
+            return Ok();
+        }
+
+        [HttpPost("deleteMessage/{msgId}")]
+        public async Task<IActionResult> DeleteMessage(int userId,int msgId)
+        {
+            if (userId != int.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier).Value))
+                return Unauthorized();
+
+            await _service.DeleteMessage(userId, msgId);
+
+            return Ok();
+        }
+
+        [HttpPost("markRead/{msgId}")]
+        public async Task<IActionResult> MarkMessageAsRead(int userId, int msgId)
+        {
+            if (userId != int.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier).Value))
+                return Unauthorized();
+
+            await _service.MakrReadMessage(userId, msgId);
+
+            return Ok();
+        }
 
     }
 }

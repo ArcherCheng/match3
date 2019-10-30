@@ -28,10 +28,10 @@ namespace Match.Controllers
         }
 
         [HttpGet("userList")]
-        public async Task<IActionResult> GetUserPageList([FromQuery] MemberParameter parameters)
+        public async Task<IActionResult> GetUserPageList([FromQuery] MemberParameter para)
         {
-            var service = Ioc.Get<IMemberService>();
-            var memberList = await _service.GetUserPageListAsync(parameters);
+            //var service = Ioc.Get<IMemberService>();
+            var memberList = await _service.GetUserPageListAsync(para);
             base.AddPaginationHeader(memberList);
             var memberListDto = _mapper.Map<IEnumerable<MemberListDto>>(memberList);
             return Ok(memberListDto);
@@ -47,7 +47,7 @@ namespace Match.Controllers
         [HttpGet("userData/{userId}")]
         public async Task<IActionResult> GetUserData(int userId)
         {
-            var service = Ioc.Get<IMemberService>();
+            //var service = Ioc.Get<IMemberService>();
             var member = await _service.GetByIdAsync(userId);
             
             return Ok(member);
@@ -56,7 +56,7 @@ namespace Match.Controllers
         [HttpGet("userDetail/{userId}")]
         public async Task<IActionResult> GetUserDetail(int userId)
         {
-            var service = Ioc.Get<IMemberService>();
+            //var service = Ioc.Get<IMemberService>();
             var detail =await _service.GetUserDetail(userId);
             return Ok(detail);
         }
@@ -64,7 +64,7 @@ namespace Match.Controllers
         [HttpGet("userPhotos/{userId}")]
         public async Task<IActionResult> GetUserPhotos(int userId)
         {
-            var service = Ioc.Get<IMemberService>();
+            //var service = Ioc.Get<IMemberService>();
             var userPhotos = await _service.GetUserPhotos(userId);
             return Ok(userPhotos);
         }
@@ -89,28 +89,28 @@ namespace Match.Controllers
 
         //未登入或註冊者用
         [HttpPost("userMatchList")]
-        public async Task<IActionResult> GetMatchList([FromBody]MemberCondition condition,[FromQuery]MemberParameter memberParameter)
+        public async Task<IActionResult> GetMatchList([FromBody]MemberCondition condition,[FromQuery]MemberParameter para)
         {
-            memberParameter.Condition = condition;
-            memberParameter.UserId = 0;
+            para.Condition = condition;
+            para.UserId = 0;
 
             var service = Ioc.Get<IMemberService>();
-            PageList<Member> list = await service.GetMatchList(memberParameter);
+            PageList<Member> list = await service.GetMatchList(para);
             return Ok(list);
         }
 
         //已經登入者用
         [Authorize]
         [HttpPost("userMatchList/{userId}")]
-        public async Task<IActionResult> GetMatchList(int userId, [FromQuery]MemberParameter memberParameter)
+        public async Task<IActionResult> GetMatchList(int userId, [FromQuery]MemberParameter para)
         {
             if (userId != int.Parse(User.FindFirst(ClaimTypes.NameIdentifier).Value))
                 return Unauthorized();
 
-            memberParameter.UserId = userId;
+            para.UserId = userId;
 
-            var service = Ioc.Get<IMemberService>();
-            PageList<Member> list = await service.GetMatchList(memberParameter);
+            //var service = Ioc.Get<IMemberService>();
+            PageList<Member> list = await _service.GetMatchList(para);
             return Ok(list);
         }
 
@@ -122,14 +122,10 @@ namespace Match.Controllers
             if (userId != int.Parse(User.FindFirst(ClaimTypes.NameIdentifier).Value))
                 return Unauthorized();
 
-            var service = Ioc.Get<IMemberService>();
-
-            await service.UpdateCondition(userId,condition);
+            //var service = Ioc.Get<IMemberService>();
+            await _service.UpdateCondition(userId,condition);
  
             return Ok(condition);
         }
-
-
-
     }
 }

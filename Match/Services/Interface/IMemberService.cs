@@ -24,6 +24,16 @@ namespace Match.Services
         Task<MemberPhoto> SetMainPhoto(int userId, int photoId);
         Task DeletePhoto(int userId, int photoId);
         Task UpdateMember(MemberEditDto model);
-        Task<PageList<Member>> GetMylikerLisk(int userId, MemberParameter para);
+        Task<PageList<Member>> GetMyLikerLisk(int userId, MemberParameter para);
+        Task<PageList<Member>> GetLikeMeLisk(int userId, MemberParameter para);
+        Task<bool> DeleteMyLiker(int userId, int likeId);
+        Task<Liker> AddMyLiker(int userId, int likeId);
+        Task<Message> GetMessage(int userId, int msgId);
+        Task<IEnumerable<Message>> GetAllMessages(int userId, MemberParameter para);
+        Task<IEnumerable<Message>> GetUnreadMessages(int userId, MemberParameter para);
+        Task<IEnumerable<Message>> GetThreadMessages(int userId, int recipientId);
+        Task CreateMessage(int userId, Message model);
+        Task DeleteMessage(int userId, int msgId);
+        Task MakrReadMessage(int userId, int msgId);
     }
 }
