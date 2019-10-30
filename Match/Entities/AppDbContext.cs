@@ -1,18 +1,41 @@
 ﻿using System;
+using System.Data;
+using System.Data.Common;
+using System.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.Extensions.Configuration;
 
 namespace Match.Entities
 {
     public partial class AppDbContext : DbContext
     {
+        private readonly IConfiguration configuration;
+        //private IDbConnection DbConnection { get; set; }
+        //private string ConnectionString { get; set; }
+
         public AppDbContext()
         {
         }
 
-        public AppDbContext(DbContextOptions<AppDbContext> options)
+        public AppDbContext(DbContextOptions<AppDbContext> options, IConfiguration configuration)
             : base(options)
         {
+            this.configuration = configuration;
+            //DbConnection = new SqlConnection(this.configuration.GetConnectionString("DefaultConnection"));
+            //ConnectionString = this.configuration.GetConnectionString("DefaultConnection");
+            //Console.WriteLine(DbConnection);
+            //Console.WriteLine(ConnectionString);
+        }
+
+        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+        {
+            if (!optionsBuilder.IsConfigured)
+            {
+                optionsBuilder.UseSqlServer("server=(local)\\SqlExpress;database=Match;Trusted_Connection=True;");
+                //optionsBuilder.UseSqlServer(DbConnection.ToString());
+                //optionsBuilder.UseSqlServer(ConnectionString);
+            }
         }
 
         public virtual DbSet<GroupKeyValue> GroupKeyValue { get; set; }
@@ -25,14 +48,6 @@ namespace Match.Entities
         public virtual DbSet<SysTransLog> SysTransLog { get; set; }
         public virtual DbSet<SysUserLog> SysUserLog { get; set; }
 
-        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-        {
-            if (!optionsBuilder.IsConfigured)
-            {
-#warning To protect potentially sensitive information in your connection string, you should move it out of source code. See http://go.microsoft.com/fwlink/?LinkId=723263 for guidance on storing connection strings.
-                optionsBuilder.UseSqlServer("server=(local)\\SqlExpress;database=Match;Trusted_Connection=True;");
-            }
-        }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

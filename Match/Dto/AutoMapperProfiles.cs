@@ -1,4 +1,5 @@
 ﻿using Match.Entities;
+using Match.Infrastructure;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,7 +11,16 @@ namespace Match.Dto
     {
         public AutoMapperProfiles()
         {
-            CreateMap<Member, MemberListDto>();
+            CreateMap<Member, MemberListDto>().ReverseMap();
+
+            CreateMap<RegisterDto, Member>();
+
+            CreateMap<Member, UserToReturnDto>();
+
+            CreateMap<Member, MemberEditDto>()
+            .ForMember(dest => dest.Introduction, opt => opt.MapFrom(src => src.MemberDetail.Introduction))
+            .ForMember(dest => dest.LikeCondition, opt => opt.MapFrom(src => src.MemberDetail.LikeCondition))
+            .ReverseMap();
         }
     }
 }

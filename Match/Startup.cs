@@ -14,6 +14,9 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Match.Entities;
 using Match.Dto;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
+using Match.Services;
 
 namespace Match
 {
@@ -29,15 +32,27 @@ namespace Match
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            //services.AddSingleton(_ => Configuration);
+
+            //services.AddDbContext<AppDbContext>(options =>
+            //    options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection"))
+            //    .ConfigureWarnings(warnings => warnings.Ignore(CoreEventId.IncludeIgnoredWarning)));
+
+            //services.AddScoped<DbContext, AppDbContext>();
+ 
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
+
             Ioc.RegisterInheritedTypes(typeof(ServiceBase).Assembly, typeof(ServiceBase));
 
-            //services.AddAutoMapper();
             var configuration = new MapperConfiguration(cfg =>
             {
-                cfg.CreateMap<Member, MemberListDto>();
+                cfg.AddProfile(new AutoMapperProfiles());
             });
-            var mapper = configuration.CreateMapper();
+            IMapper mapper = configuration.CreateMapper();
+            services.AddSingleton(mapper);
+
+            //services.AddScoped<IMemberService, MemberService>();
+            services.RegisterServices();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

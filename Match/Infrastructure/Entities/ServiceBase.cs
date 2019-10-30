@@ -1,4 +1,5 @@
-﻿using Match.Entities;
+﻿using AutoMapper;
+using Match.Entities;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -60,7 +61,6 @@ namespace Match.Infrastructure
                 await db.SaveChangesAsync();
             }
         }
-
     }
 
 

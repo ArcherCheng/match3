@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 namespace Match.Infrastructure
 {
     [Microsoft.AspNetCore.Authorization.AllowAnonymous]
-    [Microsoft.AspNetCore.Authorization.Authorize]
+    //[Microsoft.AspNetCore.Authorization.Authorize]
     [Route("api/[controller]")]
     [ApiController]
     //[ServiceFilter(typeof(LogUserActivity))]
